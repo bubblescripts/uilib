@@ -924,11 +924,24 @@ function Library:createLabelnew(options: table)
         text = {Default = "Label", ExpectedType = "string"},
     })
 
-    -- Используем опцию Parent или задаём fallback
-    local parent = options.Parent or game.CoreGui
-    if not parent then
-        warn("Для createLabelnew не указан родитель (options.Parent). Используется game.CoreGui в качестве fallback.")
-        parent = game.CoreGui
+    -- Получаем родительский объект из options или создаём ScreenGui, если его нет
+    local parent = options.Parent
+    if not parent or not parent:IsA("GuiObject") then
+        local Players = game:GetService("Players")
+        local localPlayer = Players.LocalPlayer
+        if localPlayer then
+            local playerGui = localPlayer:WaitForChild("PlayerGui")
+            local screenGui = playerGui:FindFirstChildOfClass("ScreenGui")
+            if not screenGui then
+                screenGui = Instance.new("ScreenGui")
+                screenGui.Name = "UILibraryScreenGui"
+                screenGui.Parent = playerGui
+            end
+            parent = screenGui
+        else
+            warn("Не удалось получить LocalPlayer, используем game.CoreGui как fallback")
+            parent = game.CoreGui
+        end
     end
 
     -- Создаём контейнер, стилизованный как textbox (без поля ввода)
@@ -936,10 +949,10 @@ function Library:createLabelnew(options: table)
     labelContainer.Name = "StyledLabelContainer"
     labelContainer.BackgroundColor3 = Theme.SecondaryBackgroundColor  -- фон как у текстового поля
     labelContainer.BackgroundTransparency = 0  -- полностью непрозрачен
-    labelContainer.Size = UDim2.new(1, 0, 0, 30)  -- высота можно настроить по необходимости
+    labelContainer.Size = UDim2.new(1, 0, 0, 30)  -- высоту можно настроить
     labelContainer.Parent = parent
 
-    -- Добавляем внутренний TextLabel с небольшим отступом
+    -- Создаём внутренний TextLabel с отступом
     local label = Instance.new("TextLabel")
     label.Name = "StyledLabel"
     label.BackgroundTransparency = 1  -- прозрачный фон, чтобы видеть фон контейнера
@@ -951,7 +964,7 @@ function Library:createLabelnew(options: table)
     label.Position = UDim2.new(0, 5, 0, 0)
     label.Parent = labelContainer
 
-    -- Регистрируем контейнер и ярлык для обновления через тему
+    -- Регистрируем объекты для обновления через тему
     Theme:registerToObjects({
         {object = labelContainer, property = "BackgroundColor3", theme = {"SecondaryBackgroundColor"}},
         {object = label, property = "TextColor3", theme = {"SecondaryTextColor"}},
@@ -986,6 +999,7 @@ function Library:createLabelnew(options: table)
 
     return labelObject
 end
+
 
 
 
