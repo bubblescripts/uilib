@@ -943,16 +943,12 @@ function Library:createLabelnew(options: table)
             parent = game.CoreGui
         end
     end
-
-    -- Create a ScrollingFrame as the container for the text
     local labelContainer = Instance.new("ScrollingFrame")
     labelContainer.Name = "StyledLabelContainer"
     labelContainer.BackgroundColor3 = Theme.SecondaryBackgroundColor
     labelContainer.BackgroundTransparency = 0
     labelContainer.BorderSizePixel = 0
-
-    -- 1) Set a fixed height (e.g., 200px). If the text is taller than this, a scrollbar will appear.
-    labelContainer.Size = UDim2.new(1, 0, 0, 200)
+    labelContainer.Size = UDim2.new(1, 0, 0, 72)
     labelContainer.ScrollingDirection = Enum.ScrollingDirection.Y
     labelContainer.ScrollBarThickness = 4
 
