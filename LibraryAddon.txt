@@ -1049,7 +1049,7 @@ function Library:createlargelablenew(options: table)
     label.BackgroundTransparency = 1
     label.Text = options.text
     label.Font = Enum.Font.SourceSans
-    label.TextSize = 14
+    label.TextSize = 18
     label.TextColor3 = Theme.SecondaryTextColor
     label.TextWrapped = true
     label.TextYAlignment = Enum.TextYAlignment.Top
