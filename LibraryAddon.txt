@@ -919,6 +919,65 @@ function Library:createPicker(options: table, parent, scrollingFrame, isPickerBo
 		end,
 	})
 end
+function Library:createLabelnew(options: table)
+    Utility:validateOptions(options, {
+        text = {Default = "Label", ExpectedType = "string"},
+    })
+
+    -- Используем опцию Parent или задаём fallback
+    local parent = options.Parent or nil
+    if not parent then
+        warn("Для createLabelnew не указан родитель (options.Parent). Используется game.CoreGui в качестве fallback.")
+        parent = game.CoreGui
+    end
+
+    -- Создаём контейнер для ярлыка
+    local labelContainer = Instance.new("Frame")
+    labelContainer.Name = "LabelContainerNew"
+    labelContainer.BackgroundTransparency = 1
+    labelContainer.Size = UDim2.new(1, 0, 0, 20)  -- можно изменить высоту
+    labelContainer.Parent = parent  -- теперь используем переданный родитель
+
+    -- Создаём сам ярлык
+    local label = Instance.new("TextLabel")
+    label.Name = "CustomLabelNew"
+    label.BackgroundTransparency = 1
+    label.Text = options.text
+    label.Font = Enum.Font.SourceSans
+    label.TextSize = 14
+    label.TextColor3 = Theme.SecondaryTextColor  -- используем цвет из палитры
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.Parent = labelContainer
+
+    -- Регистрируем ярлык для автоматического обновления темы
+    Theme:registerToObjects({
+        {object = label, property = "TextColor3", theme = {"SecondaryTextColor"}}
+    })
+
+    -- Объект ярлыка с методом обновления
+    local labelObject = {}
+    labelObject.Container = labelContainer
+    labelObject.Label = label
+
+    function labelObject:Update(newOptions)
+        if newOptions.text then
+            self.Label.Text = newOptions.text
+        end
+        if newOptions.textColor then
+            self.Label.TextColor3 = newOptions.textColor
+        else
+            self.Label.TextColor3 = Theme.SecondaryTextColor
+        end
+        if newOptions.textSize then
+            self.Label.TextSize = newOptions.textSize
+        end
+        if newOptions.font then
+            self.Label.Font = newOptions.font
+        end
+    end
+
+    return labelObject
+end
 
 function Library:createDropdown(options: table, parent, scrollingFrame)
 	Utility:validateOptions(options, {
