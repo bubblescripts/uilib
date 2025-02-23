@@ -922,10 +922,9 @@ end
 function Library:createLabelnew(options: table)
     Utility:validateOptions(options, {
         text = {Default = "Label", ExpectedType = "string"},
-        size = {Default = UDim2.new(1, 0, 0, 30), ExpectedType = "UDim2"}, -- Custom size or default to (1, 0, 0, 30)
     })
 
-    -- Determine the parent object
+    -- Получаем родительский объект из options или создаём ScreenGui, если его нет
     local parent = options.Parent
     if not parent or not parent:IsA("GuiObject") then
         local Players = game:GetService("Players")
@@ -940,51 +939,38 @@ function Library:createLabelnew(options: table)
             end
             parent = screenGui
         else
-            warn("Could not get LocalPlayer, using game.CoreGui as fallback.")
+            warn("Не удалось получить LocalPlayer, используем game.CoreGui как fallback")
             parent = game.CoreGui
         end
     end
 
-    -- Create a ScrollingFrame as the container
-    local labelContainer = Instance.new("ScrollingFrame")
+    -- Создаём контейнер, стилизованный как textbox (без поля ввода)
+    local labelContainer = Instance.new("Frame")
     labelContainer.Name = "StyledLabelContainer"
-    labelContainer.BackgroundColor3 = Theme.SecondaryBackgroundColor
-    labelContainer.BackgroundTransparency = 0
-    labelContainer.BorderSizePixel = 0
-    labelContainer.Size = options.size -- Use custom size if provided, else default
-    labelContainer.ScrollingDirection = Enum.ScrollingDirection.Y
-    labelContainer.ScrollBarThickness = 4
-    labelContainer.AutomaticCanvasSize = Enum.AutomaticSize.None
-    labelContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+    labelContainer.BackgroundColor3 = Theme.SecondaryBackgroundColor  -- фон как у текстового поля
+    labelContainer.BackgroundTransparency = 0  -- полностью непрозрачен
+    labelContainer.Size = UDim2.new(1, 0, 0, 30)  -- высоту можно настроить
     labelContainer.Parent = parent
 
-    -- Create the inner TextLabel
+    -- Создаём внутренний TextLabel с отступом
     local label = Instance.new("TextLabel")
     label.Name = "StyledLabel"
-    label.BackgroundTransparency = 1
+    label.BackgroundTransparency = 1  -- прозрачный фон, чтобы видеть фон контейнера
     label.Text = options.text
     label.Font = Enum.Font.SourceSans
     label.TextSize = 14
     label.TextColor3 = Theme.SecondaryTextColor
-    label.TextWrapped = true
-    label.TextYAlignment = Enum.TextYAlignment.Top
-    label.AutomaticSize = Enum.AutomaticSize.Y
-    label.Size = UDim2.new(1, -10, 0, 0)
+    label.Size = UDim2.new(1, -10, 1, 0)
     label.Position = UDim2.new(0, 5, 0, 0)
     label.Parent = labelContainer
 
-    -- Adjust scroll size dynamically
-    label:GetPropertyChangedSignal("TextBounds"):Connect(function()
-        labelContainer.CanvasSize = UDim2.new(0, 0, 0, label.AbsoluteSize.Y + 10)
-    end)
-
-    -- Register objects for theme updates
+    -- Регистрируем объекты для обновления через тему
     Theme:registerToObjects({
         {object = labelContainer, property = "BackgroundColor3", theme = {"SecondaryBackgroundColor"}},
         {object = label, property = "TextColor3", theme = {"SecondaryTextColor"}},
     })
 
-    -- Create an object wrapper with an Update method
+    -- Создаём объект ярлыка с методом обновления
     local labelObject = {}
     labelObject.Container = labelContainer
     labelObject.Label = label
@@ -1009,13 +995,6 @@ function Library:createLabelnew(options: table)
         else
             self.Container.BackgroundColor3 = Theme.SecondaryBackgroundColor
         end
-        if newOptions.size then
-            self.Container.Size = newOptions.size
-        end
-
-        task.delay(0.05, function()
-            labelContainer.CanvasSize = UDim2.new(0, 0, 0, label.AbsoluteSize.Y + 10)
-        end)
     end
 
     return labelObject
