@@ -922,9 +922,10 @@ end
 function Library:createLabelnew(options: table)
     Utility:validateOptions(options, {
         text = {Default = "Label", ExpectedType = "string"},
+        size = {Default = UDim2.new(1, 0, 0, 30), ExpectedType = "UDim2"}, -- Custom size or default to (1, 0, 0, 30)
     })
 
-    -- Determine the parent object from options, or create a ScreenGui if none is provided
+    -- Determine the parent object
     local parent = options.Parent
     if not parent or not parent:IsA("GuiObject") then
         local Players = game:GetService("Players")
@@ -944,18 +945,15 @@ function Library:createLabelnew(options: table)
         end
     end
 
-    -- Create a ScrollingFrame as the container for the text.
-    -- The container is fixed at 30px in height so that it looks compact,
-    -- and a scrollbar will appear if the content exceeds that height.
+    -- Create a ScrollingFrame as the container
     local labelContainer = Instance.new("ScrollingFrame")
     labelContainer.Name = "StyledLabelContainer"
     labelContainer.BackgroundColor3 = Theme.SecondaryBackgroundColor
     labelContainer.BackgroundTransparency = 0
     labelContainer.BorderSizePixel = 0
-    labelContainer.Size = UDim2.new(1, 0, 0, 45)  -- Fixed height of 30px
+    labelContainer.Size = options.size -- Use custom size if provided, else default
     labelContainer.ScrollingDirection = Enum.ScrollingDirection.Y
     labelContainer.ScrollBarThickness = 4
-    -- We disable automatic canvas sizing and update it manually
     labelContainer.AutomaticCanvasSize = Enum.AutomaticSize.None
     labelContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
     labelContainer.Parent = parent
@@ -970,12 +968,12 @@ function Library:createLabelnew(options: table)
     label.TextColor3 = Theme.SecondaryTextColor
     label.TextWrapped = true
     label.TextYAlignment = Enum.TextYAlignment.Top
-    label.AutomaticSize = Enum.AutomaticSize.Y  -- Adjust height automatically
+    label.AutomaticSize = Enum.AutomaticSize.Y
     label.Size = UDim2.new(1, -10, 0, 0)
     label.Position = UDim2.new(0, 5, 0, 0)
     label.Parent = labelContainer
 
-    -- Update the container's CanvasSize when the label's size changes
+    -- Adjust scroll size dynamically
     label:GetPropertyChangedSignal("TextBounds"):Connect(function()
         labelContainer.CanvasSize = UDim2.new(0, 0, 0, label.AbsoluteSize.Y + 10)
     end)
@@ -1010,6 +1008,9 @@ function Library:createLabelnew(options: table)
             self.Container.BackgroundColor3 = newOptions.backgroundColor
         else
             self.Container.BackgroundColor3 = Theme.SecondaryBackgroundColor
+        end
+        if newOptions.size then
+            self.Container.Size = newOptions.size
         end
 
         task.delay(0.05, function()
