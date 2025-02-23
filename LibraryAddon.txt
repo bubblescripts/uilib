@@ -950,12 +950,16 @@ function Library:createLabelnew(options: table)
     labelContainer.BackgroundColor3 = Theme.SecondaryBackgroundColor
     labelContainer.BackgroundTransparency = 0
     labelContainer.BorderSizePixel = 0
-    -- Set a fixed height (e.g., 200px). If the text exceeds this height, a scrollbar will appear.
+
+    -- 1) Set a fixed height (e.g., 200px). If the text is taller than this, a scrollbar will appear.
     labelContainer.Size = UDim2.new(1, 0, 0, 200)
     labelContainer.ScrollingDirection = Enum.ScrollingDirection.Y
     labelContainer.ScrollBarThickness = 4
-    -- AutomaticCanvasSize will adjust CanvasSize to fit the content vertically
-    labelContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
+
+    -- 2) Disable automatic sizing of the container. We'll manage CanvasSize ourselves.
+    labelContainer.AutomaticCanvasSize = Enum.AutomaticSize.None
+    labelContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+
     labelContainer.Parent = parent
 
     -- Create the inner TextLabel
@@ -968,11 +972,18 @@ function Library:createLabelnew(options: table)
     label.TextColor3 = Theme.SecondaryTextColor
     label.TextWrapped = true
     label.TextYAlignment = Enum.TextYAlignment.Top
-    -- AutomaticSize will adjust the TextLabel's height based on the text content
+
+    -- 3) Let the label auto-size its height. We'll update the container's CanvasSize accordingly.
     label.AutomaticSize = Enum.AutomaticSize.Y
     label.Size = UDim2.new(1, -10, 0, 0)
     label.Position = UDim2.new(0, 5, 0, 0)
     label.Parent = labelContainer
+
+    -- Whenever the TextLabel changes size, update the ScrollingFrame CanvasSize
+    label:GetPropertyChangedSignal("TextBounds"):Connect(function()
+        -- Add a small padding (e.g., +10)
+        labelContainer.CanvasSize = UDim2.new(0, 0, 0, label.AbsoluteSize.Y + 10)
+    end)
 
     -- Register objects for theme updates
     Theme:registerToObjects({
@@ -1005,10 +1016,16 @@ function Library:createLabelnew(options: table)
         else
             self.Container.BackgroundColor3 = Theme.SecondaryBackgroundColor
         end
+
+        -- Update CanvasSize in case text changed
+        task.delay(0.05, function()
+            labelContainer.CanvasSize = UDim2.new(0, 0, 0, label.AbsoluteSize.Y + 10)
+        end)
     end
 
     return labelObject
 end
+
 
 
 
