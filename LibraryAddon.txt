@@ -444,6 +444,119 @@ function Library:createTab(options: table)
 	local PassingContext = setmetatable({Page = Page}, Library)
 	return PassingContext
 end
+function Library:createLargeLabel(options: table)
+    Utility:validateOptions(options, {
+        text = {Default = "Label", ExpectedType = "string"},
+    })
+
+    -- Determine the parent object
+    local parent = options.Parent
+    if not parent or not parent:IsA("GuiObject") then
+        local Players = game:GetService("Players")
+        local localPlayer = Players.LocalPlayer
+        if localPlayer then
+            local playerGui = localPlayer:WaitForChild("PlayerGui")
+            local screenGui = playerGui:FindFirstChildOfClass("ScreenGui")
+            if not screenGui then
+                screenGui = Instance.new("ScreenGui")
+                screenGui.Name = "UILibraryScreenGui"
+                screenGui.Parent = playerGui
+            end
+            parent = screenGui
+        else
+            warn("Could not get LocalPlayer, using game.CoreGui as fallback.")
+            parent = game.CoreGui
+        end
+    end
+
+    -- Create a Frame with a border
+    local labelFrame = Instance.new("Frame")
+    labelFrame.Name = "LargeLabelFrame"
+    labelFrame.BackgroundColor3 = Theme.SecondaryBackgroundColor
+    labelFrame.Size = UDim2.new(1, 0, 0, 200)
+    labelFrame.BorderSizePixel = 2
+    labelFrame.BorderColor3 = Theme.PrimaryBorderColor
+    labelFrame.Parent = parent
+
+    -- Create a ScrollingFrame inside the bordered frame
+    local labelContainer = Instance.new("ScrollingFrame")
+    labelContainer.Name = "LargeLabelContainer"
+    labelContainer.BackgroundTransparency = 1
+    labelContainer.Size = UDim2.new(1, -4, 1, -4) -- Adjusted for border padding
+    labelContainer.Position = UDim2.new(0, 2, 0, 2)
+    labelContainer.ScrollingDirection = Enum.ScrollingDirection.Y
+    labelContainer.ScrollBarThickness = 4
+    labelContainer.AutomaticCanvasSize = Enum.AutomaticSize.None
+    labelContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+    labelContainer.Parent = labelFrame
+
+    -- Create the inner TextLabel
+    local label = Instance.new("TextLabel")
+    label.Name = "LargeStyledLabel"
+    label.BackgroundTransparency = 1
+    label.Text = options.text
+    label.Font = Enum.Font.SourceSans
+    label.TextSize = 14
+    label.TextColor3 = Theme.SecondaryTextColor
+    label.TextWrapped = true
+    label.TextYAlignment = Enum.TextYAlignment.Top
+    label.AutomaticSize = Enum.AutomaticSize.Y
+    label.Size = UDim2.new(1, -10, 0, 0)
+    label.Position = UDim2.new(0, 5, 0, 0)
+    label.Parent = labelContainer
+
+    -- Update CanvasSize dynamically
+    label:GetPropertyChangedSignal("TextBounds"):Connect(function()
+        labelContainer.CanvasSize = UDim2.new(0, 0, 0, label.AbsoluteSize.Y + 10)
+    end)
+
+    -- Register theme updates
+    Theme:registerToObjects({
+        {object = labelFrame, property = "BackgroundColor3", theme = {"SecondaryBackgroundColor"}},
+        {object = labelFrame, property = "BorderColor3", theme = {"PrimaryBorderColor"}},
+        {object = label, property = "TextColor3", theme = {"SecondaryTextColor"}},
+    })
+
+    -- Create label object with Update method
+    local labelObject = {}
+    labelObject.Frame = labelFrame
+    labelObject.Container = labelContainer
+    labelObject.Label = label
+
+    function labelObject:Update(newOptions)
+        if newOptions.text then
+            self.Label.Text = newOptions.text
+        end
+        if newOptions.textColor then
+            self.Label.TextColor3 = newOptions.textColor
+        else
+            self.Label.TextColor3 = Theme.SecondaryTextColor
+        end
+        if newOptions.textSize then
+            self.Label.TextSize = newOptions.textSize
+        end
+        if newOptions.font then
+            self.Label.Font = newOptions.font
+        end
+        if newOptions.backgroundColor then
+            self.Frame.BackgroundColor3 = newOptions.backgroundColor
+        else
+            self.Frame.BackgroundColor3 = Theme.SecondaryBackgroundColor
+        end
+        if newOptions.borderColor then
+            self.Frame.BorderColor3 = newOptions.borderColor
+        else
+            self.Frame.BorderColor3 = Theme.PrimaryBorderColor
+        end
+
+        -- Update CanvasSize in case text changed
+        task.delay(0.05, function()
+            labelContainer.CanvasSize = UDim2.new(0, 0, 0, label.AbsoluteSize.Y + 10)
+        end)
+    end
+
+    return labelObject
+end
 
 function Library:createSubTab(options: table)
 	-- Use provided options, or fall back to defaults if not provided	
