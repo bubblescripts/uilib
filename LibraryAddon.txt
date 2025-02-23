@@ -919,7 +919,7 @@ function Library:createPicker(options: table, parent, scrollingFrame, isPickerBo
 		end,
 	})
 end
-function Library:createLabelnew(options: table)
+function Library:createLabelnew	(options: table)
     Utility:validateOptions(options, {
         text = {Default = "Label", ExpectedType = "string"},
     })
@@ -1000,13 +1000,12 @@ function Library:createLabelnew(options: table)
     return labelObject
 end
 
-
-function Library:createLargeLabel(options: table)
+function Library:createlargelablenew(options: table)
     Utility:validateOptions(options, {
         text = {Default = "Label", ExpectedType = "string"},
     })
 
-    -- Determine the parent object
+    -- Determine the parent object from options, or create a ScreenGui if none is provided
     local parent = options.Parent
     if not parent or not parent:IsA("GuiObject") then
         local Players = game:GetService("Players")
@@ -1026,30 +1025,27 @@ function Library:createLargeLabel(options: table)
         end
     end
 
-    -- Create a Frame with a border
-    local labelFrame = Instance.new("Frame")
-    labelFrame.Name = "LargeLabelFrame"
-    labelFrame.BackgroundColor3 = Theme.SecondaryBackgroundColor
-    labelFrame.Size = UDim2.new(1, 0, 0, 200)
-    labelFrame.BorderSizePixel = 2
-    labelFrame.BorderColor3 = Theme.PrimaryBorderColor
-    labelFrame.Parent = parent
-
-    -- Create a ScrollingFrame inside the bordered frame
+    -- Create a ScrollingFrame as the container for the text
     local labelContainer = Instance.new("ScrollingFrame")
-    labelContainer.Name = "LargeLabelContainer"
-    labelContainer.BackgroundTransparency = 1
-    labelContainer.Size = UDim2.new(1, -4, 1, -4) -- Adjusted for border padding
-    labelContainer.Position = UDim2.new(0, 2, 0, 2)
+    labelContainer.Name = "StyledLabelContainer"
+    labelContainer.BackgroundColor3 = Theme.SecondaryBackgroundColor
+    labelContainer.BackgroundTransparency = 0
+    labelContainer.BorderSizePixel = 0
+
+    -- 1) Set a fixed height (e.g., 200px). If the text is taller than this, a scrollbar will appear.
+    labelContainer.Size = UDim2.new(1, 0, 0, 200)
     labelContainer.ScrollingDirection = Enum.ScrollingDirection.Y
     labelContainer.ScrollBarThickness = 4
+
+    -- 2) Disable automatic sizing of the container. We'll manage CanvasSize ourselves.
     labelContainer.AutomaticCanvasSize = Enum.AutomaticSize.None
     labelContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-    labelContainer.Parent = labelFrame
+
+    labelContainer.Parent = parent
 
     -- Create the inner TextLabel
     local label = Instance.new("TextLabel")
-    label.Name = "LargeStyledLabel"
+    label.Name = "StyledLabel"
     label.BackgroundTransparency = 1
     label.Text = options.text
     label.Font = Enum.Font.SourceSans
@@ -1057,26 +1053,27 @@ function Library:createLargeLabel(options: table)
     label.TextColor3 = Theme.SecondaryTextColor
     label.TextWrapped = true
     label.TextYAlignment = Enum.TextYAlignment.Top
+
+    -- 3) Let the label auto-size its height. We'll update the container's CanvasSize accordingly.
     label.AutomaticSize = Enum.AutomaticSize.Y
     label.Size = UDim2.new(1, -10, 0, 0)
     label.Position = UDim2.new(0, 5, 0, 0)
     label.Parent = labelContainer
 
-    -- Update CanvasSize dynamically
+    -- Whenever the TextLabel changes size, update the ScrollingFrame CanvasSize
     label:GetPropertyChangedSignal("TextBounds"):Connect(function()
+        -- Add a small padding (e.g., +10)
         labelContainer.CanvasSize = UDim2.new(0, 0, 0, label.AbsoluteSize.Y + 10)
     end)
 
-    -- Register theme updates
+    -- Register objects for theme updates
     Theme:registerToObjects({
-        {object = labelFrame, property = "BackgroundColor3", theme = {"SecondaryBackgroundColor"}},
-        {object = labelFrame, property = "BorderColor3", theme = {"PrimaryBorderColor"}},
+        {object = labelContainer, property = "BackgroundColor3", theme = {"SecondaryBackgroundColor"}},
         {object = label, property = "TextColor3", theme = {"SecondaryTextColor"}},
     })
 
-    -- Create label object with Update method
+    -- Create an object wrapper with an Update method
     local labelObject = {}
-    labelObject.Frame = labelFrame
     labelObject.Container = labelContainer
     labelObject.Label = label
 
@@ -1096,14 +1093,9 @@ function Library:createLargeLabel(options: table)
             self.Label.Font = newOptions.font
         end
         if newOptions.backgroundColor then
-            self.Frame.BackgroundColor3 = newOptions.backgroundColor
+            self.Container.BackgroundColor3 = newOptions.backgroundColor
         else
-            self.Frame.BackgroundColor3 = Theme.SecondaryBackgroundColor
-        end
-        if newOptions.borderColor then
-            self.Frame.BorderColor3 = newOptions.borderColor
-        else
-            self.Frame.BorderColor3 = Theme.PrimaryBorderColor
+            self.Container.BackgroundColor3 = Theme.SecondaryBackgroundColor
         end
 
         -- Update CanvasSize in case text changed
