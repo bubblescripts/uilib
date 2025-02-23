@@ -952,7 +952,7 @@ function Library:createLabelnew(options: table)
     labelContainer.BackgroundColor3 = Theme.SecondaryBackgroundColor
     labelContainer.BackgroundTransparency = 0
     labelContainer.BorderSizePixel = 0
-    labelContainer.Size = UDim2.new(1, 0, 0, 30)  -- Fixed height of 30px
+    labelContainer.Size = UDim2.new(1, 0, 0, 45)  -- Fixed height of 30px
     labelContainer.ScrollingDirection = Enum.ScrollingDirection.Y
     labelContainer.ScrollBarThickness = 4
     -- We disable automatic canvas sizing and update it manually
