@@ -925,36 +925,39 @@ function Library:createLabelnew(options: table)
     })
 
     -- Используем опцию Parent или задаём fallback
-    local parent = options.Parent or nil
+    local parent = options.Parent or game.CoreGui
     if not parent then
         warn("Для createLabelnew не указан родитель (options.Parent). Используется game.CoreGui в качестве fallback.")
         parent = game.CoreGui
     end
 
-    -- Создаём контейнер для ярлыка
+    -- Создаём контейнер, стилизованный как textbox (без поля ввода)
     local labelContainer = Instance.new("Frame")
-    labelContainer.Name = "LabelContainerNew"
-    labelContainer.BackgroundTransparency = 1
-    labelContainer.Size = UDim2.new(1, 0, 0, 20)  -- можно изменить высоту
-    labelContainer.Parent = parent  -- теперь используем переданный родитель
+    labelContainer.Name = "StyledLabelContainer"
+    labelContainer.BackgroundColor3 = Theme.SecondaryBackgroundColor  -- фон как у текстового поля
+    labelContainer.BackgroundTransparency = 0  -- полностью непрозрачен
+    labelContainer.Size = UDim2.new(1, 0, 0, 30)  -- высота можно настроить по необходимости
+    labelContainer.Parent = parent
 
-    -- Создаём сам ярлык
+    -- Добавляем внутренний TextLabel с небольшим отступом
     local label = Instance.new("TextLabel")
-    label.Name = "CustomLabelNew"
-    label.BackgroundTransparency = 1
+    label.Name = "StyledLabel"
+    label.BackgroundTransparency = 1  -- прозрачный фон, чтобы видеть фон контейнера
     label.Text = options.text
     label.Font = Enum.Font.SourceSans
     label.TextSize = 14
-    label.TextColor3 = Theme.SecondaryTextColor  -- используем цвет из палитры
-    label.Size = UDim2.new(1, 0, 1, 0)
+    label.TextColor3 = Theme.SecondaryTextColor
+    label.Size = UDim2.new(1, -10, 1, 0)
+    label.Position = UDim2.new(0, 5, 0, 0)
     label.Parent = labelContainer
 
-    -- Регистрируем ярлык для автоматического обновления темы
+    -- Регистрируем контейнер и ярлык для обновления через тему
     Theme:registerToObjects({
-        {object = label, property = "TextColor3", theme = {"SecondaryTextColor"}}
+        {object = labelContainer, property = "BackgroundColor3", theme = {"SecondaryBackgroundColor"}},
+        {object = label, property = "TextColor3", theme = {"SecondaryTextColor"}},
     })
 
-    -- Объект ярлыка с методом обновления
+    -- Создаём объект ярлыка с методом обновления
     local labelObject = {}
     labelObject.Container = labelContainer
     labelObject.Label = label
@@ -974,10 +977,17 @@ function Library:createLabelnew(options: table)
         if newOptions.font then
             self.Label.Font = newOptions.font
         end
+        if newOptions.backgroundColor then
+            self.Container.BackgroundColor3 = newOptions.backgroundColor
+        else
+            self.Container.BackgroundColor3 = Theme.SecondaryBackgroundColor
+        end
     end
 
     return labelObject
 end
+
+
 
 function Library:createDropdown(options: table, parent, scrollingFrame)
 	Utility:validateOptions(options, {
