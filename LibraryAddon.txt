@@ -924,7 +924,6 @@ function Library:createLabelnew	(options: table)
         text = {Default = "Label", ExpectedType = "string"},
     })
 
-    -- Получаем родительский объект из options или создаём ScreenGui, если его нет
     local parent = options.Parent
     if not parent or not parent:IsA("GuiObject") then
         local Players = game:GetService("Players")
@@ -939,7 +938,6 @@ function Library:createLabelnew	(options: table)
             end
             parent = screenGui
         else
-            warn("Не удалось получить LocalPlayer, используем game.CoreGui как fallback")
             parent = game.CoreGui
         end
     end
@@ -970,7 +968,6 @@ function Library:createLabelnew	(options: table)
         {object = label, property = "TextColor3", theme = {"SecondaryTextColor"}},
     })
 
-    -- Создаём объект ярлыка с методом обновления
     local labelObject = {}
     labelObject.Container = labelContainer
     labelObject.Label = label
