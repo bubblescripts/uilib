@@ -1756,9 +1756,9 @@ function Library:createManager(options: table)
 		end
 	end
 
-	local UI = Library:createTab({text = "Settings [dsc.gg/infinity-ware]", icon = options.icon})
+	local UI = Library:createTab({text = "Settings", icon = options.icon})
 	local Page = UI:createSubTab({text = "Page 1"})
-	local UI = Page:createSection({text = "UI"})
+	local UI = Page:createSection({text = "UI [dsc.gg/infinity-ware]"})
 	local SaveManager = Page:createSection({position = "Right", text = "Save Manager"})
 	local ThemeManager = Page:createSection({position = "Right", text = "Theme Manager"})
 	
