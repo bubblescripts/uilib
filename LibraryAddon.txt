@@ -162,7 +162,7 @@ function Library.new(options)
 	Library.Theme.PrimaryBackgroundColor = options.PrimaryBackgroundColor
 	Library.Theme.SecondaryBackgroundColor = options.SecondaryBackgroundColor
 	Library.Theme.TertiaryBackgroundColor = options.TertiaryBackgroundColor -- new
-	Library.Theme.TabBackgroundColor = options.TabBackgroundColor
+	Library.Theme.TabBackgroundColor = options.TabBackgroundColorа
 	Library.Theme.PrimaryTextColor = options.PrimaryTextColor
 	Library.Theme.SecondaryTextColor = options.SecondaryTextColor
 	Library.Theme.PrimaryColor = options.PrimaryColor
@@ -344,37 +344,6 @@ function Library:createTab(options: table)
     local CurrentTabLabel = Frame.CurrentTabLabel
     CurrentTabLabel.Text = options.text
     CurrentTabLabel.TextColor3 = Theme.PrimaryTextColor
-    -- Настройка анимации при выборе вкладки
-    local function tweenTabAssets(tab: Instance, icon: Instance, textButton: Instance, color: Color3, bgColor: Color3, bgTrans: number, textTrans: number, imageTrans: number)
-        Utility:tween(tab, { BackgroundColor3 = bgColor, BackgroundTransparency = bgTrans }, 0.5):Play()
-        Utility:tween(icon, { ImageTransparency = imageTrans, ImageColor3 = color }, 0.5):Play()
-        Utility:tween(textButton, { TextColor3 = color, TextTransparency = textTrans }, 0.5):Play()
-    end
-    -- Простая анимация переключения вкладок
-    local function activateTab()
-        tweenTabAssets(Tab, Icon, TextButton, Theme.PrimaryColor, Theme.TabBackgroundColor, 0, 0, 0)
-    end
-
-    local function deactivateTab()
-        tweenTabAssets(Tab, Icon, TextButton, Theme.SecondaryTextColor, Theme.TabBackgroundColor, 1, 0, 0)
-    end
-
-    -- Пример подключения нажатия: при клике на вкладку активируем её
-    ImageButton.MouseButton1Click:Connect(function()
-        -- Здесь можно добавить логику деактивации других вкладок
-        activateTab()
-        -- Запуск анимации переключения страницы (если необходимо)
-        Utility:fadeAnimation(Background.Pages)
-    end)
-
-    -- Возвращаем созданную вкладку для дальнейшей настройки, если требуется
-    return {
-        Tab = Tab,
-        Page = Page,
-        Activate = activateTab,
-        Deactivate = deactivateTab
-    }
-end
 
 	local function fadeAnimation()
 		local function tweenFadeAndPage(fade: Instance, backgroundTransparency: number, textTransparency: number, paddingY: number)
