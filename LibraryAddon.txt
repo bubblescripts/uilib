@@ -162,7 +162,7 @@ function Library.new(options)
 	Library.Theme.PrimaryBackgroundColor = options.PrimaryBackgroundColor
 	Library.Theme.SecondaryBackgroundColor = options.SecondaryBackgroundColor
 	Library.Theme.TertiaryBackgroundColor = options.TertiaryBackgroundColor -- new
-	Library.Theme.TabBackgroundColor = options.TabBackgroundColorа
+	Library.Theme.TabBackgroundColor = options.TabBackgroundColor
 	Library.Theme.PrimaryTextColor = options.PrimaryTextColor
 	Library.Theme.SecondaryTextColor = options.SecondaryTextColor
 	Library.Theme.PrimaryColor = options.PrimaryColor
@@ -278,41 +278,189 @@ function Library:destroy()
 	ScreenGui:Destroy()
 end
 
-function Library:createLabel(options: table)
-	Utility:validateOptions(options, {
-		text = {Default = "Main", ExpectedType = "string"},
-	})
+unction Library:createLabelnew	(options: table)
+    Utility:validateOptions(options, {
+        text = {Default = "Label", ExpectedType = "string"},
+    })
 
-	options.text = string.upper(options.text)
+    local parent = options.Parent
+    if not parent or not parent:IsA("GuiObject") then
+        local Players = game:GetService("Players")
+        local localPlayer = Players.LocalPlayer
+        if localPlayer then
+            local playerGui = localPlayer:WaitForChild("PlayerGui")
+            local screenGui = playerGui:FindFirstChildOfClass("ScreenGui")
+            if not screenGui then
+                screenGui = Instance.new("ScreenGui")
+                screenGui.Name = "UILibraryScreenGui"
+                screenGui.Parent = playerGui
+            end
+            parent = screenGui
+        else
+            parent = game.CoreGui
+        end
+    end
 
-	local ScrollingFrame = Background.Tabs.Frame.ScrollingFrame
+    -- Создаём контейнер, стилизованный как textbox (без поля ввода)
+    local labelContainer = Instance.new("Frame")
+    labelContainer.Name = "StyledLabelContainer"
+    labelContainer.BackgroundColor3 = Theme.SecondaryBackgroundColor  -- фон как у текстового поля
+    labelContainer.BackgroundTransparency = 0  -- полностью непрозрачен
+    labelContainer.Size = UDim2.new(1, 0, 0, 30)  -- высоту можно настроить
+    labelContainer.Parent = parent
 
-	local Line = Assets.Tabs.Line:Clone()
-	Line.Visible = true
-	Line.BackgroundColor3 = Theme.Line
-	Line.Parent = ScrollingFrame
+    -- Создаём внутренний TextLabel с отступом
+    local label = Instance.new("TextLabel")
+    label.Name = "StyledLabel"
+    label.BackgroundTransparency = 1  -- прозрачный фон, чтобы видеть фон контейнера
+    label.Text = options.text
+    label.Font = Enum.Font.SourceSans
+    label.TextSize = 14
+    label.TextColor3 = Theme.SecondaryTextColor
+    label.Size = UDim2.new(1, -10, 1, 0)
+    label.Position = UDim2.new(0, 5, 0, 0)
+    label.Parent = labelContainer
 
-	local TextLabel = Assets.Tabs.TextLabel:Clone()
-	TextLabel.Visible = true
-	TextLabel.Text = options.text
-	TextLabel.Parent = ScrollingFrame
+    -- Регистрируем объекты для обновления через тему
+    Theme:registerToObjects({
+        {object = labelContainer, property = "BackgroundColor3", theme = {"SecondaryBackgroundColor"}},
+        {object = label, property = "TextColor3", theme = {"SecondaryTextColor"}},
+    })
 
-	for _, line in ipairs(ScrollingFrame:GetChildren()) do
-		if line.Name ~= "Line" then
-			continue
-		end
+    local labelObject = {}
+    labelObject.Container = labelContainer
+    labelObject.Label = label
 
-		self.lineIndex += 1
+    function labelObject:Update(newOptions)
+        if newOptions.text then
+            self.Label.Text = newOptions.text
+        end
+        if newOptions.textColor then
+            self.Label.TextColor3 = newOptions.textColor
+        else
+            self.Label.TextColor3 = Theme.SecondaryTextColor
+        end
+        if newOptions.textSize then
+            self.Label.TextSize = newOptions.textSize
+        end
+        if newOptions.font then
+            self.Label.Font = newOptions.font
+        end
+        if newOptions.backgroundColor then
+            self.Container.BackgroundColor3 = newOptions.backgroundColor
+        else
+            self.Container.BackgroundColor3 = Theme.SecondaryBackgroundColor
+        end
+    end
 
-		if self.lineIndex == 1 then
-			line:Destroy()
-		end
-	end
-	
-	Theme:registerToObjects({
-		{object = TextLabel, property = "TextColor3", theme = {"SecondaryTextColor"}},
-		{object = Line, property = "BackgroundColor3", theme = {"Line"}},
-	})
+    return labelObject
+end
+
+function Library:createlargelablenew(options: table)
+    Utility:validateOptions(options, {
+        text = {Default = "Label", ExpectedType = "string"},
+    })
+
+    -- Determine the parent object from options, or create a ScreenGui if none is provided
+    local parent = options.Parent
+    if not parent or not parent:IsA("GuiObject") then
+        local Players = game:GetService("Players")
+        local localPlayer = Players.LocalPlayer
+        if localPlayer then
+            local playerGui = localPlayer:WaitForChild("PlayerGui")
+            local screenGui = playerGui:FindFirstChildOfClass("ScreenGui")
+            if not screenGui then
+                screenGui = Instance.new("ScreenGui")
+                screenGui.Name = "UILibraryScreenGui"
+                screenGui.Parent = playerGui
+            end
+            parent = screenGui
+        else
+            warn("Could not get LocalPlayer, using game.CoreGui as fallback.")
+            parent = game.CoreGui
+        end
+    end
+
+    -- Create a ScrollingFrame as the container for the text
+    local labelContainer = Instance.new("ScrollingFrame")
+    labelContainer.Name = "StyledLabelContainer"
+    labelContainer.BackgroundColor3 = Theme.SecondaryBackgroundColor
+    labelContainer.BackgroundTransparency = 0
+    labelContainer.BorderSizePixel = 0
+
+    -- 1) Set a fixed height (e.g., 200px). If the text is taller than this, a scrollbar will appear.
+    labelContainer.Size = UDim2.new(1, 0, 0, 200)
+    labelContainer.ScrollingDirection = Enum.ScrollingDirection.Y
+    labelContainer.ScrollBarThickness = 4
+
+    -- 2) Disable automatic sizing of the container. We'll manage CanvasSize ourselves.
+    labelContainer.AutomaticCanvasSize = Enum.AutomaticSize.None
+    labelContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+
+    labelContainer.Parent = parent
+
+    -- Create the inner TextLabel
+    local label = Instance.new("TextLabel")
+    label.Name = "StyledLabel"
+    label.BackgroundTransparency = 1
+    label.Text = options.text
+    label.Font = Enum.Font.SourceSans
+    label.TextSize = 18
+    label.TextColor3 = Theme.SecondaryTextColor
+    label.TextWrapped = true
+    label.TextYAlignment = Enum.TextYAlignment.Top
+
+    -- 3) Let the label auto-size its height. We'll update the container's CanvasSize accordingly.
+    label.AutomaticSize = Enum.AutomaticSize.Y
+    label.Size = UDim2.new(1, -10, 0, 0)
+    label.Position = UDim2.new(0, 5, 0, 0)
+    label.Parent = labelContainer
+
+    -- Whenever the TextLabel changes size, update the ScrollingFrame CanvasSize
+    label:GetPropertyChangedSignal("TextBounds"):Connect(function()
+        -- Add a small padding (e.g., +10)
+        labelContainer.CanvasSize = UDim2.new(0, 0, 0, label.AbsoluteSize.Y + 10)
+    end)
+
+    -- Register objects for theme updates
+    Theme:registerToObjects({
+        {object = labelContainer, property = "BackgroundColor3", theme = {"SecondaryBackgroundColor"}},
+        {object = label, property = "TextColor3", theme = {"SecondaryTextColor"}},
+    })
+
+    -- Create an object wrapper with an Update method
+    local labelObject = {}
+    labelObject.Container = labelContainer
+    labelObject.Label = label
+
+    function labelObject:Update(newOptions)
+        if newOptions.text then
+            self.Label.Text = newOptions.text
+        end
+        if newOptions.textColor then
+            self.Label.TextColor3 = newOptions.textColor
+        else
+            self.Label.TextColor3 = Theme.SecondaryTextColor
+        end
+        if newOptions.textSize then
+            self.Label.TextSize = newOptions.textSize
+        end
+        if newOptions.font then
+            self.Label.Font = newOptions.font
+        end
+        if newOptions.backgroundColor then
+            self.Container.BackgroundColor3 = newOptions.backgroundColor
+        else
+            self.Container.BackgroundColor3 = Theme.SecondaryBackgroundColor
+        end
+
+        -- Update CanvasSize in case text changed
+        task.delay(0.05, function()
+            labelContainer.CanvasSize = UDim2.new(0, 0, 0, label.AbsoluteSize.Y + 10)
+        end)
+    end
+
+    return labelObject
 end
 
 function Library:createTab(options: table)
@@ -414,6 +562,7 @@ function Library:createTab(options: table)
 
 	local Navigation = Modules.Navigation.new(Context)
 
+	-- this is stupid but anyways!!!
 	if not self.firstTabDebounce then
 		Navigation:enableFirstTab()
 		self.firstTabDebounce = true
@@ -918,191 +1067,6 @@ function Library:createPicker(options: table, parent, scrollingFrame, isPickerBo
 		end,
 	})
 end
-function Library:createLabelnew	(options: table)
-    Utility:validateOptions(options, {
-        text = {Default = "Label", ExpectedType = "string"},
-    })
-
-    local parent = options.Parent
-    if not parent or not parent:IsA("GuiObject") then
-        local Players = game:GetService("Players")
-        local localPlayer = Players.LocalPlayer
-        if localPlayer then
-            local playerGui = localPlayer:WaitForChild("PlayerGui")
-            local screenGui = playerGui:FindFirstChildOfClass("ScreenGui")
-            if not screenGui then
-                screenGui = Instance.new("ScreenGui")
-                screenGui.Name = "UILibraryScreenGui"
-                screenGui.Parent = playerGui
-            end
-            parent = screenGui
-        else
-            parent = game.CoreGui
-        end
-    end
-
-    -- Создаём контейнер, стилизованный как textbox (без поля ввода)
-    local labelContainer = Instance.new("Frame")
-    labelContainer.Name = "StyledLabelContainer"
-    labelContainer.BackgroundColor3 = Theme.SecondaryBackgroundColor  -- фон как у текстового поля
-    labelContainer.BackgroundTransparency = 0  -- полностью непрозрачен
-    labelContainer.Size = UDim2.new(1, 0, 0, 30)  -- высоту можно настроить
-    labelContainer.Parent = parent
-
-    -- Создаём внутренний TextLabel с отступом
-    local label = Instance.new("TextLabel")
-    label.Name = "StyledLabel"
-    label.BackgroundTransparency = 1  -- прозрачный фон, чтобы видеть фон контейнера
-    label.Text = options.text
-    label.Font = Enum.Font.SourceSans
-    label.TextSize = 14
-    label.TextColor3 = Theme.SecondaryTextColor
-    label.Size = UDim2.new(1, -10, 1, 0)
-    label.Position = UDim2.new(0, 5, 0, 0)
-    label.Parent = labelContainer
-
-    -- Регистрируем объекты для обновления через тему
-    Theme:registerToObjects({
-        {object = labelContainer, property = "BackgroundColor3", theme = {"SecondaryBackgroundColor"}},
-        {object = label, property = "TextColor3", theme = {"SecondaryTextColor"}},
-    })
-
-    local labelObject = {}
-    labelObject.Container = labelContainer
-    labelObject.Label = label
-
-    function labelObject:Update(newOptions)
-        if newOptions.text then
-            self.Label.Text = newOptions.text
-        end
-        if newOptions.textColor then
-            self.Label.TextColor3 = newOptions.textColor
-        else
-            self.Label.TextColor3 = Theme.SecondaryTextColor
-        end
-        if newOptions.textSize then
-            self.Label.TextSize = newOptions.textSize
-        end
-        if newOptions.font then
-            self.Label.Font = newOptions.font
-        end
-        if newOptions.backgroundColor then
-            self.Container.BackgroundColor3 = newOptions.backgroundColor
-        else
-            self.Container.BackgroundColor3 = Theme.SecondaryBackgroundColor
-        end
-    end
-
-    return labelObject
-end
-
-function Library:createlargelablenew(options: table)
-    Utility:validateOptions(options, {
-        text = {Default = "Label", ExpectedType = "string"},
-    })
-
-    -- Determine the parent object from options, or create a ScreenGui if none is provided
-    local parent = options.Parent
-    if not parent or not parent:IsA("GuiObject") then
-        local Players = game:GetService("Players")
-        local localPlayer = Players.LocalPlayer
-        if localPlayer then
-            local playerGui = localPlayer:WaitForChild("PlayerGui")
-            local screenGui = playerGui:FindFirstChildOfClass("ScreenGui")
-            if not screenGui then
-                screenGui = Instance.new("ScreenGui")
-                screenGui.Name = "UILibraryScreenGui"
-                screenGui.Parent = playerGui
-            end
-            parent = screenGui
-        else
-            warn("Could not get LocalPlayer, using game.CoreGui as fallback.")
-            parent = game.CoreGui
-        end
-    end
-
-    -- Create a ScrollingFrame as the container for the text
-    local labelContainer = Instance.new("ScrollingFrame")
-    labelContainer.Name = "StyledLabelContainer"
-    labelContainer.BackgroundColor3 = Theme.SecondaryBackgroundColor
-    labelContainer.BackgroundTransparency = 0
-    labelContainer.BorderSizePixel = 0
-
-    -- 1) Set a fixed height (e.g., 200px). If the text is taller than this, a scrollbar will appear.
-    labelContainer.Size = UDim2.new(1, 0, 0, 200)
-    labelContainer.ScrollingDirection = Enum.ScrollingDirection.Y
-    labelContainer.ScrollBarThickness = 4
-
-    -- 2) Disable automatic sizing of the container. We'll manage CanvasSize ourselves.
-    labelContainer.AutomaticCanvasSize = Enum.AutomaticSize.None
-    labelContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-
-    labelContainer.Parent = parent
-
-    -- Create the inner TextLabel
-    local label = Instance.new("TextLabel")
-    label.Name = "StyledLabel"
-    label.BackgroundTransparency = 1
-    label.Text = options.text
-    label.Font = Enum.Font.SourceSans
-    label.TextSize = 18
-    label.TextColor3 = Theme.SecondaryTextColor
-    label.TextWrapped = true
-    label.TextYAlignment = Enum.TextYAlignment.Top
-
-    -- 3) Let the label auto-size its height. We'll update the container's CanvasSize accordingly.
-    label.AutomaticSize = Enum.AutomaticSize.Y
-    label.Size = UDim2.new(1, -10, 0, 0)
-    label.Position = UDim2.new(0, 5, 0, 0)
-    label.Parent = labelContainer
-
-    -- Whenever the TextLabel changes size, update the ScrollingFrame CanvasSize
-    label:GetPropertyChangedSignal("TextBounds"):Connect(function()
-        -- Add a small padding (e.g., +10)
-        labelContainer.CanvasSize = UDim2.new(0, 0, 0, label.AbsoluteSize.Y + 10)
-    end)
-
-    -- Register objects for theme updates
-    Theme:registerToObjects({
-        {object = labelContainer, property = "BackgroundColor3", theme = {"SecondaryBackgroundColor"}},
-        {object = label, property = "TextColor3", theme = {"SecondaryTextColor"}},
-    })
-
-    -- Create an object wrapper with an Update method
-    local labelObject = {}
-    labelObject.Container = labelContainer
-    labelObject.Label = label
-
-    function labelObject:Update(newOptions)
-        if newOptions.text then
-            self.Label.Text = newOptions.text
-        end
-        if newOptions.textColor then
-            self.Label.TextColor3 = newOptions.textColor
-        else
-            self.Label.TextColor3 = Theme.SecondaryTextColor
-        end
-        if newOptions.textSize then
-            self.Label.TextSize = newOptions.textSize
-        end
-        if newOptions.font then
-            self.Label.Font = newOptions.font
-        end
-        if newOptions.backgroundColor then
-            self.Container.BackgroundColor3 = newOptions.backgroundColor
-        else
-            self.Container.BackgroundColor3 = Theme.SecondaryBackgroundColor
-        end
-
-        -- Update CanvasSize in case text changed
-        task.delay(0.05, function()
-            labelContainer.CanvasSize = UDim2.new(0, 0, 0, label.AbsoluteSize.Y + 10)
-        end)
-    end
-
-    return labelObject
-end
-
 
 function Library:createDropdown(options: table, parent, scrollingFrame)
 	Utility:validateOptions(options, {
@@ -1755,9 +1719,9 @@ function Library:createManager(options: table)
 		end
 	end
 
-	local UI = Library:createTab({text = "Settings", icon = options.icon})
+	local UI = Library:createTab({text = "UI", icon = options.icon})
 	local Page = UI:createSubTab({text = "Page 1"})
-	local UI = Page:createSection({text = "UI [dsc.gg/infinity-ware]"})
+	local UI = Page:createSection({text = "UI"})
 	local SaveManager = Page:createSection({position = "Right", text = "Save Manager"})
 	local ThemeManager = Page:createSection({position = "Right", text = "Theme Manager"})
 	
