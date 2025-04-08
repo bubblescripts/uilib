@@ -316,34 +316,47 @@ function Library:createLabel(options: table)
 end
 
 function Library:createTab(options: table)
-    Utility:validateOptions(options, {
-        text = { Default = "Tab", ExpectedType = "string" },
-        icon = { Default = "124718082122263", ExpectedType = "string" },
-    })
+	Utility:validateOptions(options, {
+		text = {Default = "Tab", ExpectedType = "string"},
+		icon = {Default = "124718082122263", ExpectedType = "string"},
+	})
 
-    -- Устанавливаем размеры вкладок в зависимости от Library.tabSizeX
-    Background.Tabs.Size = UDim2.new(0, Library.tabSizeX, 1, 0)
-    Background.Pages.Size = UDim2.new(1, -Library.tabSizeX, 1, 0)
+	-- Change tab size depending on Library.tabSizeX, maybe make resizer for tabs later
+	Background.Tabs.Size = UDim2.new(0, Library.tabSizeX, 1, 0)
+	Background.Pages.Size = UDim2.new(1, -Library.tabSizeX, 1, 0)
 
-    local ScrollingFrame = Background.Tabs.Frame.ScrollingFrame
-    local Tab = Assets.Tabs.Tab:Clone()
-    Tab.Visible = true
-    Tab.Parent = ScrollingFrame
+	local ScrollingFrame = Background.Tabs.Frame.ScrollingFrame
 
-    local ImageButton = Tab.ImageButton
-    local Icon = ImageButton.Icon
-    -- Здесь устанавливаем иконку с помощью стандартного префикса rbxassetid://
-    Icon.Image = "rbxassetid://" .. options.icon
+	local Tab = Assets.Tabs.Tab:Clone()
+	Tab.Visible = true
+	Tab.Parent = ScrollingFrame
 
-    local TextButton = ImageButton.TextButton
-    TextButton.Text = options.text
+	local ImageButton = Tab.ImageButton
 
-    local Page = Assets.Pages.Page:Clone()
-    Page.Parent = Background.Pages
-    local Frame = Page.Frame
-    local CurrentTabLabel = Frame.CurrentTabLabel
-    CurrentTabLabel.Text = options.text
-    CurrentTabLabel.TextColor3 = Theme.PrimaryTextColor
+	local Icon = ImageButton.Icon
+	Icon.Image = "rbxassetid://" .. options.icon
+
+	local TextButton = ImageButton.TextButton
+	TextButton.Text = options.text
+
+	local Page = Assets.Pages.Page:Clone()
+	Page.Parent = Background.Pages
+	
+	local Frame = Page.Frame
+	local PageLine = Frame.Line
+
+	local CurrentTabLabel = Frame.CurrentTabLabel
+	CurrentTabLabel.Text = options.text
+	CurrentTabLabel.TextColor3 = Theme.PrimaryTextColor
+
+	local SubTabs = Page.SubTabs
+	local SubLine = SubTabs.Line
+
+	local function tweenTabAssets(tab: Instance, icon: Instance, textButton: Instance, color: textColor3, backgroundColor3: Color3, backgroundTransparency: number, textTransparency: number, imageTransparency: number)
+		Utility:tween(tab, {BackgroundColor3 = backgroundColor3, BackgroundTransparency = backgroundTransparency}, 0.5):Play()
+		Utility:tween(icon, {ImageTransparency = imageTransparency, ImageColor3 = color}, 0.5):Play()
+		Utility:tween(textButton, {TextColor3 = color, TextTransparency = textTransparency}, 0.5):Play()
+	end	
 
 	local function fadeAnimation()
 		local function tweenFadeAndPage(fade: Instance, backgroundTransparency: number, textTransparency: number, paddingY: number)
